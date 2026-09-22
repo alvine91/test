@@ -6,21 +6,21 @@ import org.gestioncomptes.model.Budget;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.util.List;
 
 /**
  * Écran "Budget" du mockup : tableau des budgets du compte courant
- * (catégorie, limite, dépenses déjà effectuées) avec une colonne "Éditer"
+ * (catégorie, limite, progression des dépenses) avec une colonne "Éditer"
  * cliquable (voir {@link ButtonCellRenderer}/{@link ButtonCellEditor}), et
  * un bouton pour créer un nouveau budget.
  */
@@ -29,7 +29,7 @@ public class BudgetPage extends JPanel {
     private final Navigator navigator;
     private final AppContext context;
     // Modèle de table "maison" (contrairement à HistoryPage) car on a besoin d'une
-    // colonne calculée (les dépenses) et d'une colonne bouton, que DefaultTableModel
+    // colonne calculée (la progression) et d'une colonne bouton, que DefaultTableModel
     // ne sait pas représenter directement.
     private final BudgetTableModel tableModel = new BudgetTableModel();
     private final JTable table = new JTable(tableModel);
@@ -37,30 +37,53 @@ public class BudgetPage extends JPanel {
     public BudgetPage(Navigator navigator, AppContext context) {
         this.navigator = navigator;
         this.context = context;
-        setLayout(new BorderLayout(12, 12));
-        setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        setLayout(new BorderLayout(16, 16));
+        setBackground(Theme.BACKGROUND);
+        setBorder(BorderFactory.createEmptyBorder(24, 32, 24, 32));
         buildUi();
     }
 
     private void buildUi() {
-        JLabel title = new JLabel("Budget", SwingConstants.CENTER);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
-        add(title, BorderLayout.NORTH);
+        add(buildHeader(), BorderLayout.NORTH);
 
-        table.setRowHeight(28);
-        // Renderer = dessine le bouton, Editor = réagit au clic (voir Javadoc des deux classes).
+        table.setRowHeight(40);
+        table.setFont(Theme.FONT_BODY);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        table.getTableHeader().setFont(Theme.FONT_BOLD.deriveFont(12f));
+        // Renderer = dessine le composant, Editor = réagit au clic (voir Javadoc des deux classes).
+        table.getColumn("Progression").setCellRenderer(new ProgressCellRenderer());
         table.getColumn("Éditer").setCellRenderer(new ButtonCellRenderer());
         table.getColumn("Éditer").setCellEditor(new ButtonCellEditor(this::editBudget));
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        // Largeurs adaptées au contenu : "ID" et "Éditer" sont courts, "Progression"
+        // a besoin de place pour afficher "dépensé / limite" sans être coupé.
+        table.getColumn("ID").setPreferredWidth(40);
+        table.getColumn("ID").setMaxWidth(50);
+        table.getColumn("Progression").setPreferredWidth(240);
+        table.getColumn("Éditer").setPreferredWidth(80);
+        table.getColumn("Éditer").setMaxWidth(90);
 
-        JPanel buttons = new JPanel(new FlowLayout());
-        JButton addBudgetButton = new JButton("Créer un budget");
+        JPanel tableCard = Theme.card();
+        tableCard.setLayout(new BorderLayout());
+        tableCard.add(new JScrollPane(table), BorderLayout.CENTER);
+        add(tableCard, BorderLayout.CENTER);
+    }
+
+    private JPanel buildHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(Theme.title("Budgets"), BorderLayout.WEST);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        right.setOpaque(false);
+        JButton addBudgetButton = Theme.primaryButton("+ Nouveau budget");
         addBudgetButton.addActionListener(e -> createBudget());
-        JButton backButton = new JButton("Retour au compte");
+        JButton backButton = Theme.secondaryButton("Retour");
         backButton.addActionListener(e -> navigator.showAccount(context.getCurrentAccount()));
-        buttons.add(addBudgetButton);
-        buttons.add(backButton);
-        add(buttons, BorderLayout.SOUTH);
+        right.add(backButton);
+        right.add(addBudgetButton);
+        header.add(right, BorderLayout.EAST);
+        return header;
     }
 
     /** Ouvre la boîte de dialogue de création de budget, puis rafraîchit le tableau. */
@@ -91,16 +114,59 @@ public class BudgetPage extends JPanel {
         tableModel.setBudgets(budgets, account);
     }
 
+    /** Valeur affichée dans la colonne "Progression" : ce qui a été dépensé face à la limite. */
+    private record Progress(double spent, double limit) {
+        double ratio() {
+            return limit <= 0 ? 0 : spent / limit;
+        }
+    }
+
+    /**
+     * Dessine la colonne "Progression" comme une barre de progression
+     * colorée plutôt qu'un simple pourcentage texte : vert tant que les
+     * dépenses restent sous 80% du budget, orange entre 80% et 100%,
+     * rouge au-delà (budget dépassé). JProgressBar limite sa valeur à 100,
+     * on plafonne donc le pourcentage affiché sans perdre l'information
+     * de dépassement, portée par la couleur.
+     */
+    private static class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
+        ProgressCellRenderer() {
+            setStringPainted(true);
+            setMinimum(0);
+            setMaximum(100);
+            setFont(Theme.FONT_BODY.deriveFont(12f));
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                         boolean hasFocus, int row, int column) {
+            Progress progress = (Progress) value;
+            int percent = (int) Math.round(progress.ratio() * 100);
+            setValue(Math.min(100, Math.max(0, percent)));
+            // Une seule fois "CHF" (plutôt que sur les deux montants) pour que le texte
+            // tienne dans la largeur de la colonne sans être coupé.
+            setString(String.format("%,.2f / %,.2f CHF", progress.spent, progress.limit));
+            if (percent >= 100) {
+                setForeground(Theme.DANGER);
+            } else if (percent >= 80) {
+                setForeground(Theme.WARNING);
+            } else {
+                setForeground(Theme.SUCCESS);
+            }
+            return this;
+        }
+    }
+
     /**
      * Modèle de table maison : contrairement à DefaultTableModel, les
      * valeurs ne sont pas stockées cellule par cellule mais calculées à la
      * volée dans {@link #getValueAt} à partir de la liste de Budget
-     * (nécessaire pour la colonne "Dépensé", qui vient d'un calcul dans
+     * (nécessaire pour la colonne "Progression", qui vient d'un calcul dans
      * AccountService, et pour la colonne "Éditer" qui n'existe pas dans le
      * modèle Budget).
      */
     private class BudgetTableModel extends AbstractTableModel {
-        private final String[] columns = {"ID", "Catégorie", "Limite totale", "Dépensé", "Éditer"};
+        private final String[] columns = {"ID", "Catégorie", "Limite totale", "Progression", "Éditer"};
         private List<Budget> budgets = List.of();
         private Account account;
 
@@ -143,9 +209,10 @@ public class BudgetPage extends JPanel {
             return switch (columnIndex) {
                 case 0 -> b.getId();
                 case 1 -> b.getCategoryBudget().getLibelle();
-                case 2 -> String.format("%.2f CHF", b.getTotalLimit());
-                case 3 -> String.format("%.2f CHF",
-                        context.getAccountService().depensesPourCategorie(account, b.getCategoryBudget()));
+                case 2 -> Theme.formatMoney(b.getTotalLimit());
+                case 3 -> new Progress(
+                        context.getAccountService().depensesPourCategorie(account, b.getCategoryBudget()),
+                        b.getTotalLimit());
                 case 4 -> "Éditer";
                 default -> "";
             };

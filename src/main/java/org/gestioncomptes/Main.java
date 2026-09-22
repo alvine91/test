@@ -7,8 +7,11 @@ import org.gestioncomptes.ui.AppContext;
 import org.gestioncomptes.ui.MainFrame;
 import org.gestioncomptes.util.SeedImporter;
 
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import java.awt.Color;
 import java.nio.file.Path;
 
 /**
@@ -46,11 +49,17 @@ public final class Main {
         AppContext context = new AppContext(accountRepository, transactionRepository, budgetRepository);
 
         SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-                // on garde le look and feel par défaut si celui du système n'est pas disponible
-            }
+            // FlatLaf remplace le rendu Swing par défaut (gris, anguleux) par un thème
+            // plat et moderne. Component.accentColor est une propriété globale de FlatLaf :
+            // elle teinte automatiquement la sélection, le focus, les cases à cocher, les
+            // barres de progression, etc. avec notre couleur d'accent, sans avoir à styler
+            // chaque composant un par un. Component.arc/Button.arc arrondissent légèrement
+            // les coins des champs et boutons pour un rendu moins "carré".
+            UIManager.put("Component.accentColor", new Color(0x4F46E5));
+            UIManager.put("Component.arc", 10);
+            UIManager.put("Button.arc", 10);
+            UIManager.put("TextComponent.arc", 8);
+            FlatLightLaf.setup();
             new MainFrame(context).setVisible(true);
         });
     }

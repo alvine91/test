@@ -25,12 +25,22 @@ mvn test
 
 ## Écrans (fidèles au mockup)
 
-- **Login Page** : Nom, Prénom, Email, Mot de passe + bouton VALIDER.
-- **Compte** : numéro de compte, propriétaire, type, solde, boutons vers Budget / Historique,
-  et ajout d'une transaction.
-- **Budget** : liste des budgets (catégorie, limite totale, dépenses actuelles), bouton
-  "Éditer" par ligne, et création de nouveaux budgets.
-- **Historique** : liste des transactions du compte.
+- **Login Page** : Nom, Prénom, Email, Mot de passe + bouton VALIDER, dans une carte centrée.
+- **Compte** : carte de solde mise en avant, propriétaire, type, numéro de compte, boutons vers
+  Budget / Historique, et ajout d'une transaction.
+- **Budget** : liste des budgets (ID, catégorie, limite totale, barre de progression colorée
+  des dépenses), bouton "Éditer" par ligne, et création de nouveaux budgets.
+- **Historique** : liste des transactions du compte, montants colorés (vert = crédit,
+  rouge = débit).
+
+## Design
+
+L'interface utilise [FlatLaf](https://www.formdev.com/flatlaf/) (thème plat/moderne pour
+Swing) plutôt que le rendu Swing par défaut, avec une couleur d'accent, des coins arrondis
+et une police plus lisible configurés dans `Main.java`. Les couleurs, polices et fabriques de
+boutons/cartes communes à tous les écrans sont centralisées dans `ui/Theme.java`, pour une
+apparence cohérente sans dupliquer le style dans chaque page. `mvn package` produit un jar
+exécutable unique (FlatLaf embarqué via `maven-shade-plugin`).
 
 ## Décisions de conception (points ambigus du mockup/diagramme)
 

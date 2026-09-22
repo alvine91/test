@@ -31,8 +31,10 @@ public class MainFrame extends JFrame implements Navigator {
         this.context = context;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(700, 550));
+        setMinimumSize(new Dimension(760, 600));
+        setSize(860, 640);
         setLocationRelativeTo(null);
+        container.setBackground(Theme.BACKGROUND);
 
         LoginPage loginPage = new LoginPage(this, context);
         accountPage = new AccountPage(this, context);

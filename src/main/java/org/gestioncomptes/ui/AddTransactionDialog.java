@@ -3,17 +3,20 @@ package org.gestioncomptes.ui;
 import org.gestioncomptes.model.Account;
 import org.gestioncomptes.model.CategoryBudget;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -26,59 +29,63 @@ import java.time.format.DateTimeParseException;
  */
 public class AddTransactionDialog extends JDialog {
 
-    private final JTextField descriptionField = new JTextField(15);
-    private final JTextField amountField = new JTextField(15);
-    private final JTextField dateField = new JTextField(LocalDate.now().toString(), 15);
+    private static final int WIDTH = 360;
+
+    private final JTextField descriptionField = new JTextField();
+    private final JTextField amountField = new JTextField();
+    private final JTextField dateField = new JTextField(LocalDate.now().toString());
     private final JComboBox<CategoryBudget> categoryCombo = new JComboBox<>(CategoryBudget.values());
     private final JCheckBox recurringCheck = new JCheckBox("Transaction récurrente");
     private final JLabel messageLabel = new JLabel(" ");
 
     public AddTransactionDialog(JFrame owner, AppContext context, Account account) {
         super(owner, "Ajouter une transaction", true);
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 6, 6, 6);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel content = new JPanel();
+        content.setBackground(Theme.SURFACE);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBorder(BorderFactory.createEmptyBorder(24, 24, 20, 24));
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        add(new JLabel("Description"), gbc);
-        gbc.gridx = 1;
-        add(descriptionField, gbc);
+        JLabel title = Theme.title("Nouvelle transaction");
+        title.setFont(Theme.FONT_BOLD.deriveFont(18f));
+        content.add(title);
+        content.add(Box.createVerticalStrut(16));
 
-        gbc.gridx = 0;
-        gbc.gridy++;
-        add(new JLabel("Montant (+ crédit / - débit)"), gbc);
-        gbc.gridx = 1;
-        add(amountField, gbc);
+        content.add(Theme.fieldGroup("Description", descriptionField));
+        content.add(Box.createVerticalStrut(10));
+        content.add(Theme.fieldGroup("Montant (+ crédit / - débit)", amountField));
+        content.add(Box.createVerticalStrut(10));
+        content.add(Theme.fieldGroup("Date (AAAA-MM-JJ)", dateField));
+        content.add(Box.createVerticalStrut(10));
+        content.add(Theme.fieldGroup("Catégorie", categoryCombo));
+        content.add(Box.createVerticalStrut(6));
 
-        gbc.gridx = 0;
-        gbc.gridy++;
-        add(new JLabel("Date (AAAA-MM-JJ)"), gbc);
-        gbc.gridx = 1;
-        add(dateField, gbc);
+        recurringCheck.setOpaque(false);
+        recurringCheck.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.add(recurringCheck);
+        content.add(Box.createVerticalStrut(14));
 
-        gbc.gridx = 0;
-        gbc.gridy++;
-        add(new JLabel("Catégorie"), gbc);
-        gbc.gridx = 1;
-        add(categoryCombo, gbc);
+        messageLabel.setForeground(Theme.DANGER);
+        messageLabel.setFont(Theme.FONT_BODY);
+        messageLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.add(messageLabel);
+        content.add(Box.createVerticalStrut(6));
 
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 2;
-        add(recurringCheck, gbc);
-
-        gbc.gridy++;
-        JButton okButton = new JButton("Ajouter");
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        buttons.setOpaque(false);
+        buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
+        buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        JButton cancelButton = Theme.secondaryButton("Annuler");
+        cancelButton.addActionListener(e -> dispose());
+        JButton okButton = Theme.primaryButton("Ajouter");
         okButton.addActionListener(e -> submit(context, account));
-        add(okButton, gbc);
+        buttons.add(cancelButton);
+        buttons.add(okButton);
+        content.add(buttons);
 
-        gbc.gridy++;
-        messageLabel.setForeground(Color.RED);
-        add(messageLabel, gbc);
-
+        setContentPane(content);
+        setResizable(false);
         pack();
+        setSize(WIDTH, getHeight());
         setLocationRelativeTo(owner);
     }
 
