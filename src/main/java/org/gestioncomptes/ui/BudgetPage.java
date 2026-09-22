@@ -18,10 +18,19 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.List;
 
+/**
+ * Écran "Budget" du mockup : tableau des budgets du compte courant
+ * (catégorie, limite, dépenses déjà effectuées) avec une colonne "Éditer"
+ * cliquable (voir {@link ButtonCellRenderer}/{@link ButtonCellEditor}), et
+ * un bouton pour créer un nouveau budget.
+ */
 public class BudgetPage extends JPanel {
 
     private final Navigator navigator;
     private final AppContext context;
+    // Modèle de table "maison" (contrairement à HistoryPage) car on a besoin d'une
+    // colonne calculée (les dépenses) et d'une colonne bouton, que DefaultTableModel
+    // ne sait pas représenter directement.
     private final BudgetTableModel tableModel = new BudgetTableModel();
     private final JTable table = new JTable(tableModel);
 
@@ -39,6 +48,7 @@ public class BudgetPage extends JPanel {
         add(title, BorderLayout.NORTH);
 
         table.setRowHeight(28);
+        // Renderer = dessine le bouton, Editor = réagit au clic (voir Javadoc des deux classes).
         table.getColumn("Éditer").setCellRenderer(new ButtonCellRenderer());
         table.getColumn("Éditer").setCellEditor(new ButtonCellEditor(this::editBudget));
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -53,6 +63,7 @@ public class BudgetPage extends JPanel {
         add(buttons, BorderLayout.SOUTH);
     }
 
+    /** Ouvre la boîte de dialogue de création de budget, puis rafraîchit le tableau. */
     private void createBudget() {
         Account account = context.getCurrentAccount();
         AddBudgetDialog dialog = new AddBudgetDialog(
@@ -61,6 +72,7 @@ public class BudgetPage extends JPanel {
         refresh();
     }
 
+    /** Appelée par ButtonCellEditor quand on clique sur "Éditer" d'une ligne donnée. */
     private void editBudget(int row) {
         Budget budget = tableModel.getBudgetAt(row);
         EditBudgetDialog dialog = new EditBudgetDialog(
@@ -69,6 +81,7 @@ public class BudgetPage extends JPanel {
         refresh();
     }
 
+    /** Recharge la liste des budgets du compte courant et notifie le tableau. */
     public void refresh() {
         Account account = context.getCurrentAccount();
         if (account == null) {
@@ -78,11 +91,20 @@ public class BudgetPage extends JPanel {
         tableModel.setBudgets(budgets, account);
     }
 
+    /**
+     * Modèle de table maison : contrairement à DefaultTableModel, les
+     * valeurs ne sont pas stockées cellule par cellule mais calculées à la
+     * volée dans {@link #getValueAt} à partir de la liste de Budget
+     * (nécessaire pour la colonne "Dépensé", qui vient d'un calcul dans
+     * AccountService, et pour la colonne "Éditer" qui n'existe pas dans le
+     * modèle Budget).
+     */
     private class BudgetTableModel extends AbstractTableModel {
         private final String[] columns = {"ID", "Catégorie", "Limite totale", "Dépensé", "Éditer"};
         private List<Budget> budgets = List.of();
         private Account account;
 
+        /** Remplace les données affichées et prévient JTable qu'il doit se redessiner. */
         void setBudgets(List<Budget> budgets, Account account) {
             this.budgets = budgets;
             this.account = account;
@@ -108,6 +130,8 @@ public class BudgetPage extends JPanel {
             return columns[column];
         }
 
+        // Seule la colonne "Éditer" (index 4) est "éditable" : c'est ce qui déclenche
+        // l'affichage du ButtonCellEditor au lieu du simple renderer sur cette colonne.
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return columnIndex == 4;

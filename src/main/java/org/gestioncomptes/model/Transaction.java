@@ -2,6 +2,16 @@ package org.gestioncomptes.model;
 
 import java.time.LocalDate;
 
+/**
+ * Une opération (crédit ou débit) sur un compte (classe "Transaction" du
+ * diagramme de classe).
+ *
+ * <p>{@code amount} est déjà signé : positif pour un crédit (ex: salaire),
+ * négatif pour un débit (ex: achat). C'est ce qui permet à
+ * {@link Account#doTransaction(Transaction)} de simplement additionner le
+ * montant au solde, et à {@link History#totalDepensesParCategorie} de ne
+ * garder que les montants négatifs pour calculer les dépenses par budget.
+ */
 public class Transaction {
 
     private final String id;

@@ -14,6 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Dépôt CSV pour les transactions : mêmes principes que
+ * {@link AccountRepository} (fichier {@code data/transactions.csv},
+ * réécrit intégralement à chaque sauvegarde). Une transaction n'est jamais
+ * modifiée ni supprimée dans cette application : {@link #save(Transaction)}
+ * ne fait qu'ajouter une nouvelle ligne.
+ */
 public class TransactionRepository {
 
     private static final String HEADER = "id,accountId,description,montant,date,categorie,recurrente";
@@ -54,6 +61,7 @@ public class TransactionRepository {
         }
     }
 
+    /** Renvoie toutes les transactions d'un compte, utilisé pour construire un History. */
     public List<Transaction> findByAccountId(String accountId) {
         return transactions.stream()
                 .filter(t -> t.getAccountId().equals(accountId))
@@ -72,6 +80,7 @@ public class TransactionRepository {
         return String.valueOf(max + 1);
     }
 
+    /** Ajoute une nouvelle transaction et réécrit le CSV (pas d'upsert : toujours un ajout). */
     public void save(Transaction transaction) {
         transactions.add(transaction);
         persist();

@@ -16,11 +16,20 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.List;
 
+/**
+ * Écran "Historique" du mockup : liste en lecture seule des transactions du
+ * compte courant, dans un {@link JTable}. Le tableau est piloté par un
+ * {@link DefaultTableModel} : on ne modifie jamais les JLabel/cellules à la
+ * main, on vide et on repeuple le modèle dans {@link #refresh()}, et Swing
+ * se charge de redessiner la table.
+ */
 public class HistoryPage extends JPanel {
 
     private final Navigator navigator;
     private final AppContext context;
 
+    // DefaultTableModel générique avec des colonnes fixes ; on interdit l'édition
+    // car cette page n'affiche que de l'historique (pas de modification possible).
     private final DefaultTableModel tableModel = new DefaultTableModel(
             new Object[]{"ID", "Description", "Montant", "Date", "Catégorie", "Récurrente"}, 0) {
         @Override
@@ -52,6 +61,7 @@ public class HistoryPage extends JPanel {
         add(buttons, BorderLayout.SOUTH);
     }
 
+    /** Vide puis repeuple la table à partir de l'historique du compte courant. */
     public void refresh() {
         Account account = context.getCurrentAccount();
         if (account == null) {

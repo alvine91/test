@@ -16,6 +16,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+/**
+ * Écran "Login Page" du mockup : Nom, Prénom, Email, Mot de passe + bouton
+ * VALIDER. Ne fait pas de distinction visuelle entre "créer un compte" et
+ * "se connecter" : c'est {@link org.gestioncomptes.service.AuthService}
+ * qui décide, selon que le nom/prénom existe déjà ou non, s'il faut créer
+ * un compte, le "réclamer" (première connexion) ou vérifier le mot de
+ * passe (voir le Javadoc de AuthService).
+ */
 public class LoginPage extends JPanel {
 
     private final Navigator navigator;
@@ -35,6 +43,12 @@ public class LoginPage extends JPanel {
         buildUi();
     }
 
+    /**
+     * Construit le formulaire avec GridBagLayout : chaque composant est
+     * placé via un GridBagConstraints (gbc) qu'on réutilise et modifie
+     * ligne par ligne (gbc.gridy++) pour empiler les champs verticalement,
+     * avec une colonne "libellé" (gridx=0) et une colonne "champ" (gridx=1).
+     */
     private void buildUi() {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 6, 6, 6);
@@ -89,6 +103,7 @@ public class LoginPage extends JPanel {
         add(hint, gbc);
     }
 
+    /** Appelé par le bouton VALIDER : délègue à AuthService puis navigue vers la page Compte. */
     private void valider() {
         try {
             Account account = context.getAuthService().checkAccount(

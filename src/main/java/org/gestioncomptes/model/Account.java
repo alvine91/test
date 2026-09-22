@@ -1,11 +1,24 @@
 package org.gestioncomptes.model;
 
+/**
+ * Représente un compte bancaire (classe "Account" du diagramme de classe).
+ *
+ * <p>Un compte est identifié par son {@code id} et possède un propriétaire
+ * (nom/prénom séparés pour rester compatible avec les colonnes de
+ * compte.csv), des identifiants de connexion (email + mot de passe haché),
+ * un type de compte (ex: "Courant") et un solde qui évolue au fil des
+ * transactions. Cette classe ne contient aucune logique de persistance :
+ * c'est {@link org.gestioncomptes.dao.AccountRepository} qui la lit/écrit
+ * depuis le CSV, et {@link org.gestioncomptes.service.AccountService} qui
+ * orchestre les opérations métier autour d'elle.
+ */
 public class Account {
 
     private final String id;
     private String nom;
     private String prenom;
     private String email;
+    // Mot de passe stocké sous forme de hash SHA-256 (jamais en clair), voir PasswordUtils.
     private String motDePasseHash;
     private String type;
     private double balance;
@@ -41,6 +54,7 @@ public class Account {
         this.prenom = prenom;
     }
 
+    /** Nom complet affiché dans l'UI (correspond au champ "name" du diagramme de classe). */
     public String getName() {
         return nom + " " + prenom;
     }
@@ -73,6 +87,12 @@ public class Account {
         return balance;
     }
 
+    /**
+     * Applique une transaction au solde du compte. Le montant est déjà signé
+     * (positif = crédit, négatif = débit), donc on l'ajoute simplement.
+     * Appelée par {@link org.gestioncomptes.service.AccountService#addTransaction}
+     * après création de la transaction.
+     */
     public void doTransaction(Transaction transaction) {
         this.balance += transaction.getAmount();
     }

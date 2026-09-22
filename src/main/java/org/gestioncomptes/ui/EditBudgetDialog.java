@@ -12,6 +12,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+/**
+ * Boîte de dialogue modale pour modifier la limite totale d'un budget
+ * existant. Ouverte depuis BudgetPage en cliquant sur le bouton "Éditer"
+ * d'une ligne du tableau (voir {@link ButtonCellEditor}). Le champ de
+ * saisie est pré-rempli avec la valeur actuelle du budget.
+ */
 public class EditBudgetDialog extends JDialog {
 
     private final JTextField limitField;
@@ -47,6 +53,7 @@ public class EditBudgetDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /** Valide la nouvelle limite puis délègue la mise à jour à AccountService. */
     private void submit(AppContext context, Budget budget) {
         try {
             double newLimit = Double.parseDouble(limitField.getText().trim().replace(',', '.'));

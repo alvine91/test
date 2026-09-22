@@ -12,6 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Dépôt CSV pour les comptes : lit {@code data/comptes.csv} au démarrage,
+ * garde une copie en mémoire ({@code accounts}), et réécrit tout le fichier
+ * à chaque {@link #save(Account)}.
+ *
+ * <p>C'est une persistance volontairement simple (pas de base de données,
+ * pas d'écriture partielle) : adaptée à un usage local mono-utilisateur,
+ * pas à des accès concurrents. Le format d'une ligne est
+ * {@code id,nom,prenom,email,motDePasseHash,type,solde}.
+ */
 public class AccountRepository {
 
     private static final String HEADER = "id,nom,prenom,email,motDePasseHash,type,solde";
@@ -24,6 +34,7 @@ public class AccountRepository {
         load();
     }
 
+    /** Recharge la liste en mémoire depuis le CSV (appelé une fois au constructeur). */
     private void load() {
         accounts.clear();
         if (!Files.exists(csvPath)) {
@@ -56,12 +67,14 @@ public class AccountRepository {
         return accounts.stream().filter(a -> a.getId().equals(id)).findFirst();
     }
 
+    /** Recherche insensible à la casse, utilisée par AuthService pour checkAccount(). */
     public Optional<Account> findByNomPrenom(String nom, String prenom) {
         return accounts.stream()
                 .filter(a -> a.getNom().equalsIgnoreCase(nom) && a.getPrenom().equalsIgnoreCase(prenom))
                 .findFirst();
     }
 
+    /** Calcule le prochain id numérique disponible (id le plus grand + 1). */
     public String nextId() {
         int max = 0;
         for (Account a : accounts) {
@@ -74,12 +87,18 @@ public class AccountRepository {
         return String.valueOf(max + 1);
     }
 
+    /**
+     * Insère ou met à jour un compte (upsert par id), puis réécrit le CSV
+     * entier. Utilisé aussi bien pour créer un nouveau compte que pour
+     * sauvegarder le solde après une transaction.
+     */
     public void save(Account account) {
         accounts.removeIf(a -> a.getId().equals(account.getId()));
         accounts.add(account);
         persist();
     }
 
+    /** Réécrit tout le fichier CSV à partir de la liste en mémoire. */
     private void persist() {
         try {
             if (csvPath.getParent() != null) {

@@ -7,6 +7,15 @@ import javax.swing.table.TableCellEditor;
 import java.awt.Component;
 import java.util.function.IntConsumer;
 
+/**
+ * Rend une cellule de JTable cliquable comme un vrai bouton (colonne
+ * "Éditer" de BudgetPage). Swing ne propose pas nativement de bouton
+ * cliquable dans une cellule : il faut un {@link TableCellEditor} qui,
+ * dès qu'on clique sur la cellule, affiche ce même JButton et déclenche
+ * {@code onClick} avec le numéro de ligne. {@code fireEditingStopped()}
+ * referme immédiatement l'édition pour que le clic se comporte comme un
+ * clic de bouton normal plutôt que comme un mode édition.
+ */
 class ButtonCellEditor extends AbstractCellEditor implements TableCellEditor {
 
     private final JButton button = new JButton();

@@ -13,6 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Dépôt CSV pour les budgets : mêmes principes que
+ * {@link AccountRepository} (fichier {@code data/budgets.csv}). Contrairement
+ * à {@link TransactionRepository}, {@link #save(Budget)} fait un upsert par
+ * id, car un budget existant peut être modifié (bouton "Éditer" de
+ * BudgetPage change sa limite via {@code AccountService.editBudget}).
+ */
 public class BudgetRepository {
 
     private static final String HEADER = "id,accountId,categorie,limite";
@@ -49,6 +56,7 @@ public class BudgetRepository {
         }
     }
 
+    /** Renvoie tous les budgets d'un compte, affichés dans BudgetPage. */
     public List<Budget> findByAccountId(String accountId) {
         return budgets.stream()
                 .filter(b -> b.getAccountId().equals(accountId))
@@ -67,6 +75,7 @@ public class BudgetRepository {
         return String.valueOf(max + 1);
     }
 
+    /** Insère ou met à jour un budget (upsert par id), puis réécrit le CSV. */
     public void save(Budget budget) {
         budgets.removeIf(b -> b.getId().equals(budget.getId()));
         budgets.add(budget);

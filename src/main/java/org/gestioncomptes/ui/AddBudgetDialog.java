@@ -14,6 +14,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+/**
+ * Boîte de dialogue modale pour créer un nouveau budget (catégorie +
+ * limite totale) sur le compte courant, ouverte depuis BudgetPage.
+ */
 public class AddBudgetDialog extends JDialog {
 
     private final JComboBox<CategoryBudget> categoryCombo = new JComboBox<>(CategoryBudget.values());
@@ -54,6 +58,7 @@ public class AddBudgetDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /** Valide la limite saisie puis délègue la création à AccountService. */
     private void submit(AppContext context, Account account) {
         try {
             double limit = Double.parseDouble(limitField.getText().trim().replace(',', '.'));

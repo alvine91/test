@@ -17,6 +17,13 @@ import java.awt.Insets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
+/**
+ * Boîte de dialogue modale (bloque le reste de l'application tant qu'elle
+ * est ouverte, voir le {@code true} passé au constructeur de JDialog) pour
+ * ajouter une transaction depuis AccountPage. Le montant saisi est signé
+ * par l'utilisateur (+ pour un crédit, - pour un débit) et transmis tel
+ * quel à {@link org.gestioncomptes.service.AccountService#addTransaction}.
+ */
 public class AddTransactionDialog extends JDialog {
 
     private final JTextField descriptionField = new JTextField(15);
@@ -75,6 +82,12 @@ public class AddTransactionDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Valide puis enregistre la transaction. Chaque type d'erreur possible
+     * (montant non numérique, date mal formée, description vide) est
+     * capturé séparément pour afficher un message précis, plutôt qu'un
+     * message générique.
+     */
     private void submit(AppContext context, Account account) {
         try {
             String description = descriptionField.getText().trim();

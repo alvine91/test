@@ -13,6 +13,15 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 
+/**
+ * Écran "Compte" du mockup : affiche l'ID, le propriétaire, le type et le
+ * solde du compte actuellement connecté ({@link AppContext#getCurrentAccount()}),
+ * avec les boutons vers Budget, Historique, l'ajout d'une transaction, et
+ * la déconnexion. Le contenu affiché n'est mis à jour que par
+ * {@link #refresh()} : Swing ne redessine pas automatiquement les JLabel
+ * quand les données du compte changent ailleurs, il faut donc appeler
+ * refresh() explicitement (fait par {@link MainFrame#showAccount}).
+ */
 public class AccountPage extends JPanel {
 
     private final Navigator navigator;
@@ -67,6 +76,7 @@ public class AccountPage extends JPanel {
         add(buttons, BorderLayout.SOUTH);
     }
 
+    /** Ouvre la boîte de dialogue modale d'ajout de transaction, puis rafraîchit le solde affiché. */
     private void openAddTransaction() {
         Account account = context.getCurrentAccount();
         AddTransactionDialog dialog = new AddTransactionDialog(
@@ -75,6 +85,7 @@ public class AccountPage extends JPanel {
         refresh();
     }
 
+    /** Recopie les données du compte courant dans les JLabel de la page. */
     public void refresh() {
         Account account = context.getCurrentAccount();
         if (account == null) {
